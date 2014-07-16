@@ -8,7 +8,8 @@
 #include "EMGGraph.h"
 #include "ConfigurationWindow.h"
 #include "ClassifierSettings.h"
-#include "../training/MovementTrainer.h"
+#include "../training/TrainingsPainter.h"
+#include "../training/TrainingsController.h"
 #include "../RealTimeProvider.h"
 
 #include <boost/filesystem.hpp>
@@ -23,6 +24,7 @@ class MainWindow : public QMainWindow {
 private:
     static const std::string CONF_FILE;
     static const std::string CACHE_FILE;
+    static const std::string TRAINER_FOLDER;
 
     Ui::MainWindow *ui;
     QTextEdit *logText;
@@ -32,7 +34,10 @@ private:
     RealTimeProvider *provider = NULL;
     ConfigurationWindow *configuration = NULL;
     ClassifierSettings *classifierSettings = NULL;
+    TrainingsController *trainController = NULL;
+    TrainingsProcedure *training = NULL;
     boost::filesystem::path *rootPath;
+    QMenu *trainingsSelection;
 
     void initFileSystem();
     void initComponents();
@@ -46,6 +51,8 @@ public:
     //Logs the given text to the log panel.
     void log(std::string text);
 
+    void initTrainingsMenu();
+
     std::string CLASSIFIER_FOLDER = "classifier/";
 
 
@@ -56,6 +63,11 @@ private slots:
     void cMenuSMClicked();
     void eMenuFileClicked();
     void eMenuOTClicked();
+    void startTrainingClicked();
+    void addTrainingClicked();
+
+public slots:
+    void trainingSelected(int index);
 };
 
 #endif // MAINWINDOW_H

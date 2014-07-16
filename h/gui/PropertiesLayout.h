@@ -9,6 +9,8 @@ class PropertiesLayout : public QFormLayout {
 
 private:
     Properties *properties;
+    void render();
+
 public:
     PropertiesLayout(Properties *properties);
     Properties* getProperties();

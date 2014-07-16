@@ -3,7 +3,8 @@
 #include <QHBoxLayout>
 #include <SVMClassifier.h>
 
-ClassifierSettings::ClassifierSettings() {
+ClassifierSettings::ClassifierSettings(RealTimeProvider *provider) {
+    ClassifierSettings::provider = provider;
     initComponents();
 }
 
@@ -14,36 +15,59 @@ ClassifierSettings::~ClassifierSettings() {
         delete prop;
 }
 
-void ClassifierSettings::setClassifier(std::string name, Properties *prop) {
+//TODO: It is only possible to set a Classifier once per run. Second call will cause
+//error
+void ClassifierSettings::setClassifier(ClassifierEnum cl, Properties *prop) {
     if (ClassifierSettings::classifier != NULL)
         delete classifier;
     if (ClassifierSettings::prop != NULL)
         delete prop;
 
     ClassifierSettings::prop = prop;
+    ClassifierSettings::cl = cl;
 
-    nameLabel->setText(QString::fromStdString(name));
+    hide();
+    delete nameLabel;
+    delete save;
+    delete start;
+    delete stop;
+    if (settingsLayout != NULL)
+        delete settingsLayout;
+    settingsLayout = NULL;
+    delete layout();
+    initComponents();
+    show();
+
+    std::string s;
+    switch (cl) {
+    case SVM: s = "Support Vector Machine";
+        break;
+    default: s = "<unknown>";
+    }
+    nameLabel->setText(QString::fromStdString(s));
 }
 
 void ClassifierSettings::initComponents() {
-    QVBoxLayout *root = new QVBoxLayout();
+    QVBoxLayout *rootLayout = new QVBoxLayout(this);
 
-    nameLabel = new QLabel("<unknown>", this);
-    root->addWidget(nameLabel);
+    nameLabel = new QLabel("<unknown>");
+    rootLayout->addWidget(nameLabel);
 
-    if (prop != NULL)
+    save = new QPushButton("Save");
+    rootLayout->addWidget(save);
+
+    if (prop != NULL) {
         settingsLayout = new PropertiesLayout(prop);
+        rootLayout->addLayout(settingsLayout);
+    }
 
-    QPushButton *save = new QPushButton("Save");
-    root->addWidget(save);
-
-    QPushButton *start = new QPushButton("Start");
-    QPushButton *stop = new QPushButton("Stop");
+    start = new QPushButton("Start");
+    stop = new QPushButton("Stop");
     QHBoxLayout *buttons = new QHBoxLayout();
     buttons->addWidget(start);
     buttons->addWidget(stop);
-    root->addLayout(buttons);
-    setLayout(root);
+    rootLayout->addLayout(buttons);
+    setLayout(rootLayout);
 }
 
 void ClassifierSettings::startClicked() {
@@ -59,13 +83,16 @@ void ClassifierSettings::stopClicked() {
 void ClassifierSettings::saveClicked() {
     if (prop == NULL)
         return;
+
     settingsLayout->storeValues();
     prop->store();
 
-    if (nameLabel->text().toStdString() == "Support Vector Machine") {
-        classifier = new set;
-    }
-    if (nameLabel->text().toStdString() == "Mean Shift") {
+    delete classifier;
 
+    switch (cl) {
+    case ClassifierEnum::SVM:
+        motion_classifier::MultiClassSVM *svm = new motion_classifier::MultiClassSVM(prop);
+        classifier = new motion_classifier::SVMClassifier(provider, svm, prop);
+        break;
     }
 }

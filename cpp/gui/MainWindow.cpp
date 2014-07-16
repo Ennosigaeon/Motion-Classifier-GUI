@@ -1,4 +1,5 @@
 #include "../../h/gui/MainWindow.h"
+#include "../../h/training/AddTraining.h"
 #include "ui_mainwindow.h"
 
 #include <fstream>
@@ -11,11 +12,13 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGroupBox>
+#include <QSignalMapper>
 
 #include <EMGFileProvider.h>
 
 const std::string MainWindow::CONF_FILE = "conf.txt";
 const std::string MainWindow::CACHE_FILE = "cache.txt";
+const std::string MainWindow::TRAINER_FOLDER = "trainer/";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -24,9 +27,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     initFileSystem();
     cache = new Properties(rootPath->string() + CACHE_FILE);
+    trainController = new TrainingsController(rootPath->string() + TRAINER_FOLDER);
 
     initComponents();
     initMenu();
+    initTrainingsMenu();
     initToolbar();
 }
 
@@ -38,6 +43,8 @@ MainWindow::~MainWindow() {
         delete classifierSettings;
     if (configuration != NULL)
         delete configuration;
+    if (trainController != NULL)
+        delete trainController;
     if (cache != NULL)
         delete cache;
 
@@ -56,6 +63,7 @@ void MainWindow::initFileSystem() {
     if (!boost::filesystem::exists(*rootPath)) {
         boost::filesystem::create_directories(*rootPath);
         boost::filesystem::create_directory(s + CLASSIFIER_FOLDER);
+        boost::filesystem::create_directories(s + TRAINER_FOLDER);
 
         std::ofstream out(s + CONF_FILE);
         out << "sample.rows = 0" << std::endl;
@@ -87,7 +95,7 @@ void MainWindow::initComponents() {
     QVBoxLayout *rightLayout = new QVBoxLayout;
     rootLayout->addItem(rightLayout);
 
-    classifierSettings = new ClassifierSettings();
+    classifierSettings = new ClassifierSettings(provider);
     rightLayout->addWidget(classifierSettings);
 
     logText = new QTextEdit;
@@ -121,19 +129,24 @@ void MainWindow::initMenu() {
     menuBar()->addMenu(emgProvider);
 
     QMenu *training = new QMenu("Training");
+    trainingsSelection = new QMenu("Select Training");
+    training->addMenu(trainingsSelection);
+    training->addSeparator();
     QAction *addTraining = new QAction("Add Training", this);
     training->addAction(addTraining);
     menuBar()->addMenu(training);
 
     QObject::connect(settings, SIGNAL(triggered()), configuration, SLOT(makeVisible()));
     QObject::connect(fileEMG, SIGNAL(triggered()), this, SLOT(eMenuFileClicked()));
+    QObject::connect(svmClassifier, SIGNAL(triggered()), this, SLOT(cMenuSVMClicked()));
+    QObject::connect(addTraining, SIGNAL(triggered()), this, SLOT(addTrainingClicked()));
 }
 
 void MainWindow::initToolbar() {
     QToolBar *bar = new QToolBar();
     QAction *startReading = new QAction("Start", this);
     QAction *stopReading = new QAction("Stop", this);
-    QAction *training = new QAction("Training", this);
+    QAction *training = new QAction("Train Classifier", this);
     bar->addAction(startReading);
     bar->addAction(stopReading);
     bar->addSeparator();
@@ -142,6 +155,20 @@ void MainWindow::initToolbar() {
 
     QObject::connect(startReading, SIGNAL(triggered()), this, SLOT(readingStartClicked()));
     QObject::connect(stopReading, SIGNAL(triggered()), this, SLOT(readingStopClicked()));
+    QObject::connect(training, SIGNAL(triggered()), this, SLOT(startTrainingClicked()));
+}
+
+void MainWindow::initTrainingsMenu() {
+    trainingsSelection->clear();
+    QSignalMapper *mapper = new QSignalMapper(this);
+    QObject::connect(mapper, SIGNAL(mapped(int)), this, SLOT(trainingSelected(int)));
+
+    for (auto it = trainController->getAllTrainings()->begin(); it != trainController->getAllTrainings()->end(); ++it) {
+        QAction *a = new QAction(QString::fromStdString((*it)->getName()), trainingsSelection);
+        trainingsSelection->addAction(a);
+        mapper->setMapping(a, (*it)->getNr());
+        QObject::connect(a, SIGNAL(triggered()), mapper, SLOT(map()));
+    }
 }
 
 //slots
@@ -154,11 +181,11 @@ void MainWindow::readingStopClicked() {
 }
 
 void MainWindow::cMenuSVMClicked() {
-    //logger->info("SVM Classifier selected");
-    std::string file = "svm.txt";
-    //Properties *prop = new Properties(rootPath->string() + file);
-    //classifierSettings
-    //ClassifierSettings *cs = new ClassifierSettings("SVM Classifier", prop);
+    std::string file = "classifier/svm.txt";
+    Properties *prop = new Properties(rootPath->string() + file);
+    for (auto it = prop->getValues().begin(); it != prop->getValues().end(); ++it)
+        std::cout << it->first << "\t" << it->second << std::endl;
+    classifierSettings->setClassifier(ClassifierEnum::SVM, prop);
 }
 
 void MainWindow::cMenuSMClicked() {
@@ -188,4 +215,20 @@ void MainWindow::eMenuFileClicked() {
 
 void MainWindow::eMenuOTClicked() {
 
+}
+
+void MainWindow::addTrainingClicked() {
+    AddTraining *add = new AddTraining(trainController, this);
+    add->show();
+}
+
+void MainWindow::trainingSelected(int index) {
+    training = trainController->getTraining(index);
+    std::cout << training->getName() << std::endl;
+}
+
+void MainWindow::startTrainingClicked() {
+    if (training == NULL)
+        return;
+    training->run(provider);
 }

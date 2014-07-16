@@ -17,23 +17,30 @@ SOURCES +=\
     cpp/gui/EMGChannel.cpp \
     cpp/gui/EMGGraph.cpp \
     cpp/gui/MainWindow.cpp \
-    cpp/training/MovementTrainer.cpp \
     cpp/Main.cpp \
     cpp/RealTimeProvider.cpp \
     cpp/gui/ClassifierSettings.cpp \
     cpp/gui/ConfigurationWindow.cpp \
-    cpp/gui/PropertiesLayout.cpp
+    cpp/gui/PropertiesLayout.cpp \
+    cpp/training/Movement.cpp \
+    cpp/training/AddTraining.cpp \
+    cpp/training/TrainingsController.cpp \
+    cpp/training/TrainingsProcedure.cpp \
+    cpp/training/TrainingsPainter.cpp
 
 HEADERS  += \
     h/gui/EMGChannel.h \
     h/gui/EMGGraph.h \
     h/gui/MainWindow.h \
-    h/training/MovementTrainer.h \
     h/RealTimeProvider.h \
-    h/Motion.h \
     h/gui/ClassifierSettings.h \
     h/gui/ConfigurationWindow.h \
-    h/gui/PropertiesLayout.h
+    h/gui/PropertiesLayout.h \
+    h/training/Movement.h \
+    h/training/AddTraining.h \
+    h/training/TrainingsProcedure.h \
+    h/training/TrainingsController.h \
+    h/training/TrainingsPainter.h
 
 FORMS    += ui/mainwindow.ui
 
