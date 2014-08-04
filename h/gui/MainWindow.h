@@ -11,8 +11,7 @@
 #include "../training/TrainingsPainter.h"
 #include "../training/TrainingsController.h"
 #include "../RealTimeProvider.h"
-
-#include <boost/filesystem.hpp>
+#include "../ConfigManager.h"
 
 namespace Ui {
 class MainWindow;
@@ -22,24 +21,18 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 
 private:
-    static const std::string CONF_FILE;
-    static const std::string CACHE_FILE;
-    static const std::string TRAINER_FOLDER;
-
     Ui::MainWindow *ui;
     QTextEdit *logText;
 
-    Properties *cache = NULL;
+    ConfigManager *config = NULL;
     EMGGraph *emgGraph = NULL;
     RealTimeProvider *provider = NULL;
     ConfigurationWindow *configuration = NULL;
     ClassifierSettings *classifierSettings = NULL;
     TrainingsController *trainController = NULL;
     TrainingsProcedure *training = NULL;
-    boost::filesystem::path *rootPath;
     QMenu *trainingsSelection;
 
-    void initFileSystem();
     void initComponents();
     void initMenu();
     void initToolbar();

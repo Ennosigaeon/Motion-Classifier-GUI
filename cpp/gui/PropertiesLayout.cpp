@@ -7,7 +7,7 @@
 PropertiesLayout::PropertiesLayout(Properties *properties) {
     PropertiesLayout::properties = properties;
 
-    for (std::map<std::string, std::string>::iterator it = properties->getValues().begin(); it != properties->getValues().end(); ++it) {
+    for (auto it = properties->getValues().begin(); it != properties->getValues().end(); ++it) {
         QLineEdit *text = new QLineEdit(QString::fromStdString(it->second));
         addRow(QString::fromStdString(it->first), text);
     }

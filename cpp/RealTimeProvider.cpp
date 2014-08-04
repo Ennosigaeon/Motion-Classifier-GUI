@@ -58,7 +58,7 @@ void RealTimeProvider::run() {
         math::Vector *values = mean->getEntries();
         int i = 0;
         for (QList<EMGChannel*>::iterator it = channels->begin(); it != channels->end(); ++it, ++i)
-            (*it)->addValue(values[i].getZ() / 100);
+            (*it)->addValue(values[i].get(math::Dimension::Z) / 100);
 
         graph->replot();
 

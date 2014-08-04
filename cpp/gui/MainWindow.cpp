@@ -16,18 +16,14 @@
 
 #include <EMGFileProvider.h>
 
-const std::string MainWindow::CONF_FILE = "conf.txt";
-const std::string MainWindow::CACHE_FILE = "cache.txt";
-const std::string MainWindow::TRAINER_FOLDER = "trainer/";
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow) {
     ui->setupUi(this);
 
-    initFileSystem();
-    cache = new Properties(rootPath->string() + CACHE_FILE);
-    trainController = new TrainingsController(rootPath->string() + TRAINER_FOLDER);
+    config = ConfigManager::getInstance();
+    trainController = new TrainingsController(config->getTrainerDir());
 
     initComponents();
     initMenu();
@@ -45,47 +41,16 @@ MainWindow::~MainWindow() {
         delete configuration;
     if (trainController != NULL)
         delete trainController;
-    if (cache != NULL)
-        delete cache;
+    if (config != NULL)
+        delete config;
 
     delete ui;
-}
-
-void MainWindow::initFileSystem() {
-    std::stringstream ss;
-    if (getenv("HOME") == NULL)
-        ss << getenv("HOMEDRIVE") << getenv("HOMEPATH") << "/Documents/Motion-Classifier/";
-    else
-        ss << getenv("HOME") << "/Documents/Motion-Classifier/";
-    std::string s = ss.str();
-    std::replace(s.begin(), s.end(), '\\', '/');
-    rootPath = new boost::filesystem::path(s);
-    if (!boost::filesystem::exists(*rootPath)) {
-        boost::filesystem::create_directories(*rootPath);
-        boost::filesystem::create_directory(s + CLASSIFIER_FOLDER);
-        boost::filesystem::create_directories(s + TRAINER_FOLDER);
-
-        std::ofstream out(s + CONF_FILE);
-        out << "sample.rows = 0" << std::endl;
-        out <<"sample.columns = 0" << std::endl;
-        out << "interval.nrSamples = 0" << std::endl;
-        out << "emgProvider.bufferWarning = 1000" << std::endl;
-        out << "blockingQueue.maxWaitTime = 5000" << std::endl;
-        out << "trainer.baseDir = C:/Tmp/Trainer/" << std::endl;
-        out << "trainer.trainingsSize = 3000" << std::endl;
-        out << "trainer.nrRuns = 1" << std::endl;
-        out << "graph.maxdisplay = 50" << std::endl;
-        out.close();
-
-        out.open(s + CACHE_FILE);
-        out.close();
-    }
 }
 
 void MainWindow::initComponents() {
     QHBoxLayout *rootLayout = new QHBoxLayout;
 
-    Properties *prop = new Properties(rootPath->string() + CONF_FILE);
+    Properties *prop = config->getConf();
     motion_classifier::AppConfig::load(*prop);
     emgGraph = new EMGGraph(prop->getInt("sample.rows") * prop->getInt("sample.columns"), prop->getInt("graph.maxdisplay"));
     provider = new RealTimeProvider(emgGraph);
@@ -182,10 +147,7 @@ void MainWindow::readingStopClicked() {
 
 void MainWindow::cMenuSVMClicked() {
     std::string file = "classifier/svm.txt";
-    Properties *prop = new Properties(rootPath->string() + file);
-    for (auto it = prop->getValues().begin(); it != prop->getValues().end(); ++it)
-        std::cout << it->first << "\t" << it->second << std::endl;
-    classifierSettings->setClassifier(ClassifierEnum::SVM, prop);
+    classifierSettings->setClassifier(ClassifierEnum::SVM, new Properties(config->getRootPath() + file));
 }
 
 void MainWindow::cMenuSMClicked() {
@@ -193,6 +155,7 @@ void MainWindow::cMenuSMClicked() {
 }
 
 void MainWindow::eMenuFileClicked() {
+    Properties *cache = config->getCache();
     QFileDialog dialog(this, "File Selector", QString::fromStdString(cache->get("emgFile")));
 
     //only true, when user selected "Ok"

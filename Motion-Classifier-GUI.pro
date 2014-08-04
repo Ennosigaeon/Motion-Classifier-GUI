@@ -26,7 +26,8 @@ SOURCES +=\
     cpp/training/AddTraining.cpp \
     cpp/training/TrainingsController.cpp \
     cpp/training/TrainingsProcedure.cpp \
-    cpp/training/TrainingsPainter.cpp
+    cpp/training/TrainingsPainter.cpp \
+    cpp/ConfigManager.cpp
 
 HEADERS  += \
     h/gui/EMGChannel.h \
@@ -40,7 +41,8 @@ HEADERS  += \
     h/training/AddTraining.h \
     h/training/TrainingsProcedure.h \
     h/training/TrainingsController.h \
-    h/training/TrainingsPainter.h
+    h/training/TrainingsPainter.h \
+    h/ConfigManager.h
 
 FORMS    += ui/mainwindow.ui
 
