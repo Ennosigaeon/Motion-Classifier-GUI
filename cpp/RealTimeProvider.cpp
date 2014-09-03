@@ -18,27 +18,38 @@ void RealTimeProvider::setProvider(EMGProvider *provider) {
     RealTimeProvider::emgProvider = provider;
 }
 
-void RealTimeProvider::setClassifierActive(bool status) {
+void RealTimeProvider::setClassifierActive(bool status, std::string file) {
+    if (status == classifierActive)
+        return;
+
     classifierActive = status;
+
+    if (classifierActive && !file.empty()) {
+        out.open(file);
+    }
+    else {
+        out.close();
+    }
 }
 
 void RealTimeProvider::send(const Signal &signal){
+    if (emgProvider == NULL) {
+        //TODO: Show warning
+        return;
+    }
+
     if (signal == Signal::START) {
+        emgProvider->send(Signal::START);
         if (status == Status::NEW) {
             status = Status::RUNNING;
-            if (emgProvider != NULL)
-                thread = std::thread(&RealTimeProvider::run, this);
-            else
-                thread = std::thread(&RealTimeProvider::rndRun, this);
+            thread = std::thread(&RealTimeProvider::run, this);
         }
     }
-    if (signal == Signal::STOP && emgProvider != NULL)
+    if (signal == Signal::STOP)
         emgProvider->send(signal);
     if (signal == Signal::SHUTDOWN) {
         status = Status::FINISHED;
-        //release lock
-        if (emgProvider != NULL)
-            emgProvider->send(Signal::START);
+        emgProvider->send(Signal::SHUTDOWN);
         if (thread.joinable())
             thread.join();
     }
@@ -50,10 +61,12 @@ void RealTimeProvider::send(const Signal &signal){
  * is reploted to fast.
  */
 void RealTimeProvider::run() {
-    emgProvider->send(Signal::START);
     channels = graph->getChannels();
     while (status == Status::RUNNING) {
         Interval *interval = emgProvider->getInterval();
+        if (interval == NULL)
+            continue;
+
         Sample *mean = interval->getMeanSample();
         math::Vector *values = mean->getEntries();
         int i = 0;
@@ -63,22 +76,15 @@ void RealTimeProvider::run() {
         graph->replot();
 
         //adds the Interval to queue, so that waiting classifier can process Interval
-        if (classifierActive)
+        if (classifierActive) {
+            if (out.is_open())
+                out << *interval->getMeanSample();
             addInterval(interval);
+        }
     }
 }
 
-void RealTimeProvider::rndRun() {
-    channels = graph->getChannels();
-    while (status == Status::RUNNING) {
-        for (auto it = channels->begin(); it != channels->end(); ++it) {
-            if (((double) rand() / (RAND_MAX)) < 0.5)
-                (*it)->addValue(-((double) rand() / (RAND_MAX)) / 4);
-            else
-                (*it)->addValue(((double) rand() / (RAND_MAX)) / 4);
-        }
-        graph->replot();
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
+int RealTimeProvider::getSampleNr() const {
+    return emgProvider->getSampleNr();
 }
 

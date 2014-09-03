@@ -26,7 +26,6 @@ SOURCES +=\
     cpp/training/AddTraining.cpp \
     cpp/training/TrainingsController.cpp \
     cpp/training/TrainingsProcedure.cpp \
-    cpp/training/TrainingsPainter.cpp \
     cpp/ConfigManager.cpp
 
 HEADERS  += \
@@ -41,7 +40,6 @@ HEADERS  += \
     h/training/AddTraining.h \
     h/training/TrainingsProcedure.h \
     h/training/TrainingsController.h \
-    h/training/TrainingsPainter.h \
     h/ConfigManager.h
 
 FORMS    += ui/mainwindow.ui
@@ -67,8 +65,8 @@ INCLUDEPATH += $$PWD/../../Motion-Classifier/Motion-Classifier/h
 DEPENDPATH += $$PWD/../../Motion-Classifier/Motion-Classifier/h
 
 #Boost log
-win32: LIBS += -LC:/Develop/boost_1_55_0/stage/lib/ -llibboost_log-vc120-mt-gd-1_55
+win32: LIBS += -LC:/Develop/boost_1_56_0/stage/lib/ -llibboost_log-vc120-mt-gd-1_56
 
-INCLUDEPATH += C:/Develop/boost_1_55_0
-DEPENDPATH += C:/Develop/boost_1_55_0
+INCLUDEPATH += C:/Develop/boost_1_56_0
+DEPENDPATH += C:/Develop/boost_1_56_0
 
